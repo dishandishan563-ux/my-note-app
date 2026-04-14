@@ -15,3 +15,5 @@ export type Category = 'Personal' | 'Work' | 'Ideas' | 'Important' | 'Others';
 export const CATEGORIES: Category[] = ['Personal', 'Work', 'Ideas', 'Important', 'Others'];
 
 export type NavTab = 'All' | 'Pinned' | 'Archived' | 'Trash';
+
+export type ViewMode = 'grid' | 'list' | 'compact' | 'masonry' | 'cards';

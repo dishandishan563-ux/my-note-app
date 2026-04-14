@@ -1,6 +1,6 @@
 {
-  "name": "Minimalist Notes",
-  "description": "A clean, minimal notes application with categories, search, pinning, and dark mode support.",
+  "name": "Smart Notes",
+  "description": "A high-performance, minimalist notes application with multiple view modes and dark mode support.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

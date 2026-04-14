@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Moon, Sun, StickyNote, Archive, Trash2, Pin, LayoutGrid, Menu, X as CloseIcon } from 'lucide-react';
-import { Note, Category, NavTab, CATEGORIES } from './types';
+import { Plus, Moon, Sun, StickyNote, Archive, Trash2, Pin, LayoutGrid, Menu, X as CloseIcon, List, Columns } from 'lucide-react';
+import { Note, Category, NavTab, CATEGORIES, ViewMode } from './types';
 import { storage } from './lib/storage';
 import NoteCard from './components/NoteCard';
 import NoteModal from './components/NoteModal';
@@ -18,6 +18,9 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
   const [activeTab, setActiveTab] = useState<NavTab>('All');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    return (localStorage.getItem('viewMode') as ViewMode) || 'grid';
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -32,6 +35,10 @@ export default function App() {
   useEffect(() => {
     setNotes(storage.getNotes());
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('viewMode', viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -114,8 +121,16 @@ export default function App() {
     { id: 'Trash', icon: Trash2, label: 'Trash' },
   ];
 
+  const viewModes = [
+    { id: 'grid', icon: LayoutGrid, label: 'Grid' },
+    { id: 'list', icon: List, label: 'List' },
+    { id: 'compact', icon: Columns, label: 'Compact' },
+    { id: 'masonry', icon: StickyNote, label: 'Masonry' },
+    { id: 'cards', icon: LayoutGrid, label: 'Cards' },
+  ];
+
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black transition-colors duration-300 flex">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300 flex">
       {/* Sidebar Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -124,7 +139,7 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
           />
         )}
       </AnimatePresence>
@@ -139,12 +154,15 @@ export default function App() {
             <div className="p-2 bg-zinc-900 dark:bg-zinc-100 rounded-xl">
               <StickyNote className="text-white dark:text-zinc-900" size={24} />
             </div>
-            <h1 className="text-xl font-black tracking-tighter text-zinc-900 dark:text-zinc-100">
-              MINIMALIST
-            </h1>
+            <div>
+              <h1 className="text-xl font-black tracking-tighter text-zinc-900 dark:text-zinc-100">
+                SMART NOTES
+              </h1>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Efficiency First</p>
+            </div>
           </div>
 
-          <nav className="space-y-1 flex-grow">
+          <nav className="space-y-1 flex-grow overflow-y-auto">
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -194,14 +212,40 @@ export default function App() {
             ))}
           </nav>
 
-          <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
+            <div className="grid grid-cols-5 gap-1 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl">
+              {viewModes.map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => setViewMode(mode.id as ViewMode)}
+                  className={cn(
+                    "p-2 rounded-lg transition-all",
+                    viewMode === mode.id 
+                      ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm" 
+                      : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  )}
+                  title={mode.label}
+                >
+                  <mode.icon size={14} className="mx-auto" />
+                </button>
+              ))}
+            </div>
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl text-sm font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all"
+              className="w-full flex items-center justify-between px-4 py-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-sm font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-all"
             >
               <div className="flex items-center gap-3">
                 {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                 {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              </div>
+              <div className={cn(
+                "w-10 h-5 rounded-full relative transition-colors duration-300",
+                isDarkMode ? "bg-zinc-100" : "bg-zinc-900"
+              )}>
+                <div className={cn(
+                  "absolute top-1 w-3 h-3 rounded-full transition-all duration-300",
+                  isDarkMode ? "right-1 bg-zinc-900" : "left-1 bg-zinc-100"
+                )} />
               </div>
             </button>
           </div>
@@ -211,7 +255,7 @@ export default function App() {
       {/* Main Content Area */}
       <div className="flex-grow flex flex-col min-w-0">
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-zinc-50/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
+        <header className="sticky top-0 z-30 bg-zinc-50/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -225,7 +269,7 @@ export default function App() {
             </div>
 
             <div className="hidden sm:block">
-              <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">
+              <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
                 {activeTab} {selectedCategory !== 'All' && `• ${selectedCategory}`}
               </h2>
             </div>
@@ -235,12 +279,19 @@ export default function App() {
         {/* Main Content */}
         <main className="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
           {filteredNotes.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-              <AnimatePresence mode="popLayout">
+            <div className={cn(
+              "grid gap-4",
+              viewMode === 'grid' ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : 
+              viewMode === 'masonry' ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" :
+              viewMode === 'cards' ? "grid-cols-1 md:grid-cols-2 gap-8" :
+              "grid-cols-1"
+            )}>
+              <AnimatePresence mode="popLayout" initial={false}>
                 {filteredNotes.map((note) => (
                   <NoteCard
                     key={note.id}
                     note={note}
+                    viewMode={viewMode}
                     onEdit={handleEditNote}
                     onDelete={handleDeleteNote}
                     onTogglePin={handleTogglePin}

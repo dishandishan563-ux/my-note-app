@@ -1,0 +1,6 @@
+{
+  "name": "Minimalist Notes",
+  "description": "A clean, minimal notes application with categories, search, pinning, and dark mode support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
